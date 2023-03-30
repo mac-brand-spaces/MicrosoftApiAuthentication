@@ -21,7 +21,7 @@ implementation
 
 function TtestModule.GetAccessToken: string;
 begin
-  Resulr := self.Token;
+  Result := self.Token;
 end;
 
 procedure TtestModule.raiseError;
