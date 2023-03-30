@@ -3,11 +3,15 @@ program main;
   {$APPTYPE CONSOLE}
 
 uses
-  MicrosoftApiAuthenticator;
+  MicrosoftApiAuthenticator,
+  testModule,
+  key_press_helper,
+  System.Classes,
+  System.SysUtils;
 
 var
-  Authenticator: TMicrosoftApiAuthenticator;
-
+  Authenticator: TMsAuthenticator;
+  module: TtestModule;
 begin
   Authenticator := TMsAuthenticator.Create(
     ATDelegated,
@@ -25,7 +29,7 @@ begin
     end,
     procedure(Error: TMsError)
     begin
-      Memo1.Lines.Add(Format(
+      Writeln(Format(
         ''
         + '%sStatus: . . . . . %d : %s'
         + '%sErrorName:  . . . %s'
@@ -43,8 +47,19 @@ begin
     end,
     procedure(out Cancel: boolean)
     begin
-      Application.ProcessMessages;
+      Cancel := KeyPressed(0);
     end
     )
   );
+
+  module := TtestModule.Create(Authenticator);
+
+  Writeln(module.AccessToken);
+
+  module.raiseError();
+
+  module.Free;
+
+  Authenticator.Free;
+
 end.
