@@ -373,11 +373,12 @@ constructor TMsDelegatedAuthenticator.Create(ClientInfo: TMsClientInfo;
 begin
   inherited Create;
   self.FAuthenticatorType := TAthenticatorType.ATDelegated;
+
   // setup HTTP Client
   self.FHttpClient := THTTPClient.Create;
-  self.FHttpClient.Accept := 'application/json';
-  self.FHttpClient.ContentType := 'application/x-www-form-urlencoded';
-  self.FHttpClient.AcceptCharSet := TEncoding.UTF8.EncodingName;
+  //self.FHttpClient.Accept := 'application/json';
+  //self.FHttpClient.ContentType := 'application/x-www-form-urlencoded';
+  //self.FHttpClient.AcceptCharSet := TEncoding.UTF8.EncodingName;
 
   // set Variables
   self.FClientInfo := ClientInfo;
@@ -421,6 +422,9 @@ begin
   + '&redirect_uri=' + self.FClientInfo.RedirectUri.GetRedirectUri
   + '&grant_type=refresh_token');
   ARequest.SourceStream := ARequestData;
+  // add Headers
+  ARequest.AddHeader('Content-Type', 'application/x-www-form-urlencoded');
+  ARequest.AddHeader('Accept', 'application/json');
   // Execute Request
   AResponse := self.FHttpClient.Execute(ARequest);
   // Free Request Data Stream
@@ -541,6 +545,9 @@ begin
     + '&redirect_uri=' + self.FClientInfo.RedirectUri.GetRedirectUri
     + '&grant_type=authorization_code');
     ARequest.SourceStream := ARequestData;
+    // add Headers
+    ARequest.AddHeader('Content-Type', 'application/x-www-form-urlencoded');
+    ARequest.AddHeader('Accept', 'application/json');
     // Execute Request
     AResponse := self.FHttpClient.Execute(ARequest);
     // Free Request Data Stream
@@ -795,9 +802,9 @@ begin
   self.FAuthenticatorType := TAthenticatorType.ATDeamon;
   // setup HTTP Client
   self.FHttpClient := THTTPClient.Create;
-  self.FHttpClient.Accept := 'application/json';
-  self.FHttpClient.ContentType := 'application/x-www-form-urlencoded';
-  self.FHttpClient.AcceptCharSet := TEncoding.UTF8.EncodingName;
+  //self.FHttpClient.Accept := 'application/json';
+  //self.FHttpClient.ContentType := 'application/x-www-form-urlencoded';
+  //self.FHttpClient.AcceptCharSet := TEncoding.UTF8.EncodingName;
 
   // set Variables
   self.FClientInfo := ClientInfo;
@@ -898,6 +905,9 @@ begin
   + '&client_secret=' + self.FClientInfo.ClientSecret
   + '&grant_type=client_credentials');
   ARequest.SourceStream := ARequestData;
+  // add Headers
+  ARequest.AddHeader('Content-Type', 'application/x-www-form-urlencoded');
+  ARequest.AddHeader('Accept', 'application/json');
   // Execute Request
   AResponse := self.FHttpClient.Execute(ARequest);
   // Free Request Data Stream
