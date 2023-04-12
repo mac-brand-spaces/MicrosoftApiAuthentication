@@ -48,6 +48,7 @@ begin
     procedure(out Cancel: boolean)
     begin
       Cancel := KeyPressed(0);
+      Sleep(1000);
     end
     )
   );

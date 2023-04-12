@@ -709,71 +709,78 @@ var
   AError, AErrorDescription: string;
   AParams: TStringList;
 begin
-  // parse Url Params
-  AParams := TStringList.Create;
-  AParams.Delimiter := '&';
-  AParams.StrictDelimiter := true;
-  AParams.DelimitedText := ARequestInfo.QueryParams;
-  // handle connection
-  if (AParams.Values[Code] <> '') and (AParams.Values[State] <> '') then
+  if ARequestInfo.Document.Trim(['/']).ToLower = self.FClientInfo.RedirectUri.URL.Trim(['/']).ToLower then
   begin
-    // Check if State is correct
-    if AParams.Values[State] = Self.FState then
+    // parse Url Params
+    AParams := TStringList.Create;
+    AParams.Delimiter := '&';
+    AParams.StrictDelimiter := true;
+    AParams.DelimitedText := ARequestInfo.QueryParams;
+    // handle connection
+    if (AParams.Values[Code] <> '') and (AParams.Values[State] <> '') then
     begin
-      // save Acces Code
-      self.FAccesCode := AParams.Values[Code];
+      // Check if State is correct
+      if AParams.Values[State] = Self.FState then
+      begin
+        // save Acces Code
+        self.FAccesCode := AParams.Values[Code];
+      end
+      else
+      begin
+        // in case the state is not correct, "create" the error
+        AError := Error_invalidRequest;
+        AErrorDescription := Error_invalidRequestDescription;
+      end;
     end
     else
     begin
-      // in case the state is not correct, "create" the error
-      AError := Error_invalidRequest;
-      AErrorDescription := Error_invalidRequestDescription;
-    end;
-  end
-  else
-  begin
-    // try to get the error message, if there is none, just say unknown
-    AError := AParams.Values[Error];
-    if AError = '' then AError := Error_unknown;
-    AErrorDescription := AParams.Values[ErrorDescription];
-    if AErrorDescription = '' then
-    begin
-      AErrorDescription := AParams.Values['error_subcode'];
+      // try to get the error message, if there is none, just say unknown
+      AError := AParams.Values[Error];
+      if AError = '' then AError := Error_unknown;
+      AErrorDescription := AParams.Values[ErrorDescription];
       if AErrorDescription = '' then
-        AErrorDescription := Error_unknown;
+      begin
+        AErrorDescription := AParams.Values['error_subcode'];
+        if AErrorDescription = '' then
+          AErrorDescription := Error_unknown;
+      end;
     end;
-  end;
-  AParams.Free;
+    AParams.Free;
 
-  // create the Response Page
-  if (AError <> '') or (AErrorDescription <> '') then
-  begin
-    self.FAccesCodeErrorOccured := true;
-    if (AError = 'access_denied') and (AErrorDescription = 'cancel') then
+    // create the Response Page
+    if (AError <> '') or (AErrorDescription <> '') then
     begin
-      self.FAccesCodeErrorIsCancel := true;
-      AResponseInfo.ContentStream := TStringStream.Create(
-      '<title>Login cancelled</title>The Authentication process was cancelled. You can close this tab now.'
-      );
+      self.FAccesCodeErrorOccured := true;
+      if (AError = 'access_denied') and (AErrorDescription = 'cancel') then
+      begin
+        self.FAccesCodeErrorIsCancel := true;
+        AResponseInfo.ContentStream := TStringStream.Create(
+        '<title>Login cancelled</title>The Authentication process was cancelled. You can close this tab now.'
+        );
+      end
+      else
+      begin
+        self.FAccesCodeErrorIsCancel := false;
+        // when there is an error, the error page is shown
+        // TODO: Check if content stream is already a created object
+        AResponseInfo.ContentStream := TStringStream.Create(
+          '<title>Login error</title><b>Error:</b><br>' + AError +
+          '<br><br><b>Description:</b><br>' + AErrorDescription
+        );
+      end;
     end
     else
     begin
-      self.FAccesCodeErrorIsCancel := false;
-      // when there is an error, the error page is shown
-      // TODO: Check if content stream is already a created object
-      AResponseInfo.ContentStream := TStringStream.Create(
-        '<title>Login error</title><b>Error:</b><br>' + AError +
-        '<br><br><b>Description:</b><br>' + AErrorDescription
-      );
+      // if everything is ok, the OnPageOpen function is called and the Response
+      // must be built there
+      self.FEvents.OnPageOpen(AResponseInfo);
+      // Set Variable
+      self.FAccesCodeSet := true;
     end;
   end
   else
   begin
-    // if everything is ok, the OnPageOpen function is called and the Response
-    // must be built there
-    self.FEvents.OnPageOpen(AResponseInfo);
-    // Set Variable
-    self.FAccesCodeSet := true;
+    AResponseInfo.ResponseNo := 404;
   end;
 end;
 
