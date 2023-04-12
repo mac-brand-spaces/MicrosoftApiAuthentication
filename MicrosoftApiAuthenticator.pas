@@ -778,10 +778,6 @@ begin
       self.FAccesCodeSet := true;
     end;
   end
-  else
-  begin
-    AResponseInfo.ResponseNo := 404;
-  end;
 end;
 
 procedure TMsDelegatedAuthenticator.FOnIdCommandError(AContext: TIdContext;
