@@ -1,0 +1,9 @@
+{
+	"name": "MicrosoftApiAuthentication",
+	"description": "Delphi package that makes the life with msAPI easier",
+	"version": "1.3.1",
+	"homepage": "https://github.com/MeroFuruya/MicrosoftApiAuthentication",
+	"mainsrc": "./src",
+	"projects": [],
+	"dependencies": {}
+}
