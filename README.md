@@ -1,19 +1,28 @@
 # MicrosoftApiAuthentication
 
-This is a simple Delphi-module to authenticate with Microsoft APIs using OAuth2.0.
+This is a simple Delphi-module to authenticate against Microsoft APIs using OAuth2.0.
 
-## Installation
+## 1 Installation (with [boss](https://github.com/HashLoad/boss))
 
-Just take the MicrosoftApiAuthentication.pas file and include it in your project.
+```powershell
+boss install MeroFuruya/MicrosoftApiAuthentication
+```
 
-## Usage
+## 2 Installation (without boss)
 
-Depending on weather you want to authenticate with a Microsoft Account or with a client secret, the Create method of the TMsAuthenticator class has to be called with different parameters.
+Just download the latest source code release from the [release page](https://github.com/MeroFuruya/MicrosoftApiAuthentication/releases/latest) and add all contents of the the `src\` directory to your project.
 
-### Microsoft Account (DELEGATED)
+## 3 Usage
+
+Depending on weather you want to authenticate with a Microsoft Account or with a client secret, the Create method of the `TMsAuthenticator` class has to be called with different parameters.
+
+### 3.1 Microsoft Account (`DELEGATED`)
 
 ```delphi
-<Var> := TMsAuthenticator.Create(
+var
+  Authenticator: TMsAuthenticator;
+begin
+  Authenticator := TMsAuthenticator.Create(
     ATDelegated,
     TMsClientInfo.Create(
       '<YOUR TENANT ID>',
@@ -51,26 +60,39 @@ Depending on weather you want to authenticate with a Microsoft Account or with a
       sleep(0); // if you refresh app-messages here you dont need the sleep
       // Application.ProcessMessages;
     end
-    )
   );
+
+  // Use the authenticator
+  .
+  .
+  .
+
+  // Free the authenticator
+  Authenticator.Free;
+end;
 ```
 
-### Client Secret (APPLICATION)
+Storing the token is done automatically (on windows its at `%appdata%\<exe name or specified name>\token.bin`).
+
+### 3.2 Client Secret (`APPLICATION`)
 
 ```delphi
-<Var> := TMsAuthenticator.Create(
+var
+  Authenticator: TMsAuthenticator;
+begin
+  Authenticator := TMsAuthenticator.Create(
     ATDelegated,
     TMsClientInfo.Create(
       '<YOUR TENANT ID>',
       '<YOUR CLIENT ID>',
       '<YOUR CLIENT SECRET>',
       ['User.Read', '<SCOPES>'],
-      TRedirectUri.Create(8080, 'MyApp'), // YOUR REDIRECT URI (it must be localhost though)
+      TRedirectUri.Create(8080, 'MyApp'),  // YOUR REDIRECT URI (it must be localhost though)
     ),
     TMsClientEvents.Create(
     procedure(ResponseInfo: THttpServerResponse)
     begin
-      ResponseInfo.ContentStream := TStringStream.Create('<title>Login Succes</title>This tab can be closed now :)');  // YOUR SUCCESS PAGE, do whatever you want here
+      ResponseInfo.ContentStream := TStringStream.Create('<title>Succes</title>This tab can be closed now :)');  // YOUR SUCCESS PAGE, do whatever you want here
     end,
     procedure(Error: TMsError)
     begin
@@ -98,9 +120,18 @@ Depending on weather you want to authenticate with a Microsoft Account or with a
     end
     )
   );
+
+  // Use the authenticator
+  .
+  .
+  .
+
+  // Free the authenticator
+  Authenticator.Free;
+end;
 ```
 
-### Adding Modules
+### 3.3 Adding Modules
 
 You can create your own modules by inheriting from TMsModule and implementing the abstract methods.
 
@@ -109,20 +140,75 @@ unit MyModule;
 interface
 
 uses
-  MicrosoftApiAuthenticator;
+  MicrosoftApiAuthenticator,
+  System.Net.HttpClient,
+  System.Net.URLClient;
 
 TMsMyAddon = class(TMsAdapter)
 private
 public
-  constructor Create(const Authenticator: TMsAuthenticator);
+  procedure DoSomething;  // example method
 end;
 
 implementation
 
-constructor TMsMyAddon.Create(const Authenticator: TMsAuthenticator);
+procedure TMsMyAddon.DoSomething;
+var
+  AResponse: IHTTPResponse;
+  AError: TMsError;
+  AJsonResponse: TJSONValue;
+  AJsonError: TJsonValue;
+  AString: string;
 begin
-  inherited Create(Authenticator);
+  // get me
+  AResponse := self.Http.Get('https://graph.microsoft.com/v1.0/me', nil, [TNameValuePair.Create('Authentication', self.Token)]);
+
+  if AResponse.StatusCode <> 200 then
+  begin
+    // handle an error
+    AError.HTTPStatusCode := AResponse.StatusCode;
+    AError.HTTPStatusText := AResponse.StatusText;
+    AError.HTTPurl := AResponse.URL.ToString;
+    AError.HTTPMethod := AResponse.MethodString;
+    AError.HTTPreq_Header := AResponse.Headers;
+    AError.HTTPres_header := AResponse.Headers;
+    AError.HTTPerror_data := AResponse.ContentAsString;
+
+    // try to parse the error message and description
+    AJsonResponse := TJSONValue.ParseJSONValue(ARes.ContentAsString(TEncoding.UTF8));
+    if AJsonResponse <> nil then
+    begin
+      if AJsonResponse.TryGetValue<TJsonValue>('error', AJsonError) then
+      begin
+        AJsonError.TryGetValue<string>('code', AError.HTTPerror_name);
+        AJsonError.TryGetValue<string>('message', AError.HTTPerror_description);
+      end;
+      AJsonResponse.Free;
+    end;
+  end
+  else
+  begin
+    // Do something with the response
+
+    // Parse the response
+    AJsonResponse := TJSONValue.ParseJSONValue(ARes.ContentAsString(TEncoding.UTF8));
+    if AJsonResponse <> nil then
+    begin
+      // try to get the display name
+      if AJsonResponse.TryGetValue<string>('displayName', AString) then
+        Writeln(AString);
+      AJsonResponse.Free;
+    end;
+  end;
 end;
 
 end.
 ```
+
+Things like Throttling and Rate Limiting are **NOT** handled by the library, you have to do that yourself.
+
+## 4 Scopes
+
+A list of scopes can be found [here](https://learn.microsoft.com/en-us/graph/permissions-reference).
+
+`offline_access` scope gets added automatically.
