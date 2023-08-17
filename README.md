@@ -1,214 +1,107 @@
-# MicrosoftApiAuthentication
+<div align="center">
+  <a href="https://github.com/mac-brand-spaces/MicrosoftApiAuthentication">
+    <img src="images/logo.png" alt="Logo" width="80" height="80">
+  </a>
+
+<h3 align="center">MicrosoftApiAuthentication</h3>
+
+  <p align="center">
+    Delphi package that makes the life with msAPI easier
+    <br />
+    <a href="https://github.com/mac-brand-spaces/MicrosoftApiAuthentication/tree/main/docs/usage.md"><strong>Explore the docs »</strong></a>
+    <br />
+    <br />
+    <a href="https://github.com/mac-brand-spaces/MicrosoftApiAuthentication/issues?labels=bug&template=bug-report---.yml">Report Bug</a>
+    ·
+    <a href="https://github.com/mac-brand-spaces/MicrosoftApiAuthentication/issues?labels=enhancement&template=feature-request---.yml">Request Feature</a>
+  </p>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+## Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [About The Project](#about-the-project)
+  - [Built With](#built-with)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+- [1 Installation (with boss)](#1-installation-with-boss)
+- [2 Installation (without boss)](#2-installation-without-boss)
+- [Usage](#usage)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
+- [Acknowledgments](#acknowledgments)
+
+<!-- ABOUT THE PROJECT -->
+## About The Project
 
 This is a simple Delphi-module to authenticate against Microsoft APIs using OAuth2.0.
+
+### Built With
+
+- [![Delphi][Delphi]][Delphi-url]
+
+<!-- GETTING STARTED -->
+## Getting Started
+
+### Prerequisites
+
+- Delphi 11 Alexandria
 
 ## 1 Installation (with [boss](https://github.com/HashLoad/boss))
 
 ```powershell
-boss install MeroFuruya/MicrosoftApiAuthentication
+boss install mac-brand-spaces/MicrosoftApiAuthentication
 ```
 
 ## 2 Installation (without boss)
 
-Just download the latest source code release from the [release page](https://github.com/MeroFuruya/MicrosoftApiAuthentication/releases/latest) and add all contents of the the `src\` directory to your project.
+Just download the latest source code release from the [release page](https://github.com/mac-brand-spaces/MicrosoftApiAuthentication/releases/latest) and add all contents of the the `src\` directory to your project.
 
-## 3 Usage
+<!-- USAGE EXAMPLES -->
+## Usage
 
-Depending on weather you want to authenticate with a Microsoft Account or with a client secret, the Create method of the `TMsAuthenticator` class has to be called with different parameters.
+see [docs](docs/usage.md)
 
-### 3.1 Microsoft Account (`DELEGATED`)
+<!-- ROADMAP -->
+## Roadmap
 
-```delphi
-var
-  Authenticator: TMsAuthenticator;
-begin
-  Authenticator := TMsAuthenticator.Create(
-    ATDelegated,
-    TMsClientInfo.Create(
-      '<YOUR TENANT ID>',
-      '<YOUR CLIENT ID>',
-      ['User.Read', '<SCOPES>'],
-      TRedirectUri.Create(8080, 'MyApp'), // YOUR REDIRECT URI (it must be localhost though)
-      TMsTokenStorege.CreateEmpty
-    ),
-    TMsClientEvents.Create(
-    procedure(ResponseInfo: THttpServerResponse)
-    begin
-      ResponseInfo.ContentStream := TStringStream.Create('<title>Login Succes</title>This tab can be closed now :)');  // YOUR SUCCESS PAGE, do whatever you want here
-    end,
-    procedure(Error: TMsError)
-    begin
-      Writeln(Format(  // A premade error message, do whatever you want here
-        ''
-        + '%sStatus: . . . . . %d : %s'
-        + '%sErrorName:  . . . %s'
-        + '%sErrorDescription: %s'
-        + '%sUrl:  . . . . . . %s %s'
-        + '%sData: . . . . . . %s',
-        [
-          sLineBreak, error.HTTPStatusCode, error.HTTPStatusText,
-          sLineBreak, error.HTTPerror_name,
-          sLineBreak, error.HTTPerror_description,
-          sLineBreak, error.HTTPMethod, error.HTTPurl,
-          sLineBreak, error.HTTPerror_data
-        ]
-      ));
-    end,
-    procedure(out Cancel: boolean)
-    begin
-      Cancel := KeyPressed(0);  // Cancel the authentication if a key is pressed
-      sleep(0); // if you refresh app-messages here you dont need the sleep
-      // Application.ProcessMessages;
-    end
-  );
+See the [open issues](https://github.com/mac-brand-spaces/MicrosoftApiAuthentication/issues) for a full list of proposed features (and known issues).
 
-  // Use the authenticator
-  .
-  .
-  .
+<!-- CONTRIBUTING -->
+## Contributing
 
-  // Free the authenticator
-  Authenticator.Free;
-end;
-```
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-Storing the token is done automatically (on windows its at `%appdata%\<exe name or specified name>\token.bin`).
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
+Don't forget to give the project a star! Thanks again!
 
-### 3.2 Client Secret (`APPLICATION`)
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-```delphi
-var
-  Authenticator: TMsAuthenticator;
-begin
-  Authenticator := TMsAuthenticator.Create(
-    ATDelegated,
-    TMsClientInfo.Create(
-      '<YOUR TENANT ID>',
-      '<YOUR CLIENT ID>',
-      '<YOUR CLIENT SECRET>',
-      ['User.Read', '<SCOPES>'],
-      TRedirectUri.Create(8080, 'MyApp'),  // YOUR REDIRECT URI (it must be localhost though)
-    ),
-    TMsClientEvents.Create(
-    procedure(ResponseInfo: THttpServerResponse)
-    begin
-      ResponseInfo.ContentStream := TStringStream.Create('<title>Succes</title>This tab can be closed now :)');  // YOUR SUCCESS PAGE, do whatever you want here
-    end,
-    procedure(Error: TMsError)
-    begin
-      Writeln(Format(  // A premade error message, do whatever you want here
-        ''
-        + '%sStatus: . . . . . %d : %s'
-        + '%sErrorName:  . . . %s'
-        + '%sErrorDescription: %s'
-        + '%sUrl:  . . . . . . %s %s'
-        + '%sData: . . . . . . %s',
-        [
-          sLineBreak, error.HTTPStatusCode, error.HTTPStatusText,
-          sLineBreak, error.HTTPerror_name,
-          sLineBreak, error.HTTPerror_description,
-          sLineBreak, error.HTTPMethod, error.HTTPurl,
-          sLineBreak, error.HTTPerror_data
-        ]
-      ));
-    end,
-    procedure(out Cancel: boolean)
-    begin
-      Cancel := KeyPressed(0);  // Cancel the authentication if a key is pressed
-      sleep(0); // if you refresh app-messages here you dont need the sleep
-      // Application.ProcessMessages;
-    end
-    )
-  );
+<!-- LICENSE -->
+## License
 
-  // Use the authenticator
-  .
-  .
-  .
+Distributed under the MIT License. See [`LICENSE`](./LICENSE) for more information.
 
-  // Free the authenticator
-  Authenticator.Free;
-end;
-```
+<!-- CONTACT -->
+## Contact
 
-### 3.3 Adding Modules
+mac. brand spaces - [dev@mac.de](mailto:dev@mac.de)
 
-You can create your own modules by inheriting from TMsModule and implementing the abstract methods.
+Project Link: [https://github.com/mac-brand-spaces/MicrosoftApiAuthentication](https://github.com/mac-brand-spaces/MicrosoftApiAuthentication)
 
-```delphi
-unit MyModule;
-interface
+<!-- ACKNOWLEDGMENTS -->
+## Acknowledgments
 
-uses
-  MicrosoftApiAuthenticator,
-  System.Net.HttpClient,
-  System.Net.URLClient;
+- [Marius Kehl](https://github.com/MeroFuruya)
 
-TMsMyAddon = class(TMsAdapter)
-private
-public
-  procedure DoSomething;  // example method
-end;
-
-implementation
-
-procedure TMsMyAddon.DoSomething;
-var
-  AResponse: IHTTPResponse;
-  AError: TMsError;
-  AJsonResponse: TJSONValue;
-  AJsonError: TJsonValue;
-  AString: string;
-begin
-  // get me
-  AResponse := self.Http.Get('https://graph.microsoft.com/v1.0/me', nil, [TNameValuePair.Create('Authentication', self.Token)]);
-
-  if AResponse.StatusCode <> 200 then
-  begin
-    // handle an error
-    AError.HTTPStatusCode := AResponse.StatusCode;
-    AError.HTTPStatusText := AResponse.StatusText;
-    AError.HTTPurl := AResponse.URL.ToString;
-    AError.HTTPMethod := AResponse.MethodString;
-    AError.HTTPreq_Header := AResponse.Headers;
-    AError.HTTPres_header := AResponse.Headers;
-    AError.HTTPerror_data := AResponse.ContentAsString;
-
-    // try to parse the error message and description
-    AJsonResponse := TJSONValue.ParseJSONValue(ARes.ContentAsString(TEncoding.UTF8));
-    if AJsonResponse <> nil then
-    begin
-      if AJsonResponse.TryGetValue<TJsonValue>('error', AJsonError) then
-      begin
-        AJsonError.TryGetValue<string>('code', AError.HTTPerror_name);
-        AJsonError.TryGetValue<string>('message', AError.HTTPerror_description);
-      end;
-      AJsonResponse.Free;
-    end;
-  end
-  else
-  begin
-    // Do something with the response
-
-    // Parse the response
-    AJsonResponse := TJSONValue.ParseJSONValue(ARes.ContentAsString(TEncoding.UTF8));
-    if AJsonResponse <> nil then
-    begin
-      // try to get the display name
-      if AJsonResponse.TryGetValue<string>('displayName', AString) then
-        Writeln(AString);
-      AJsonResponse.Free;
-    end;
-  end;
-end;
-
-end.
-```
-
-Things like Throttling and Rate Limiting are **NOT** handled by the library, you have to do that yourself.
-
-## 4 Scopes
-
-A list of scopes can be found [here](https://learn.microsoft.com/en-us/graph/permissions-reference).
-
-`offline_access` scope gets added automatically.
+<!-- MARKDOWN LINKS & IMAGES -->
+<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+[Delphi]: https://img.shields.io/badge/Delphi-ED1F35?style=for-the-badge&logo=delphi&logoColor=white
+[Delphi-url]: https://www.embarcadero.com/de/products/delphi
